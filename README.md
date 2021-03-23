@@ -21,7 +21,7 @@ For this project the used tools are:
   - from Maven, as dependency
   - from binaries, in order to use the *spark-shell*.
 
-  I preferred to use it from Scala with respect to Python because Scala is the language I know better and I always used since the day I approached Spark. In addition, Scala is a static-typed language, while Python is dynamically typed, and in my opinion this makes Scala a more readable language (if you make types explicit of course) and makes it easy to handle bigger projects.
+  I prefer to use Spark from Scala with respect to Python because Scala is a static-typed language, while Python is dynamically typed, and in my opinion this makes Scala a more readable language (if you make types explicit of course) and makes it easier to handle bigger projects.
  - **MariaDB 10.5.9** (https://mariadb.com/kb/en/documentation/): relational DB, known to be born from the same authors of MySQL. I chose this DB because it's one of the most popular DBs, opensource, and, last but not least, cloud ready. In fact, you can find it for example in AWS (https://mariadb.com/kb/en/mariadb-on-amazon-rds/).
  - **Apache Maven 3.6.3** (https://maven.apache.org/guides/getting-started/index.html): build tool. Since my first approach to Scala and Spark, I found SBT less documented and stable, so I preferred to use Maven. That's probably because SBT is newer than Maven, so things may be changed now, but I usually stick to Maven when it comes to builds.
  - **IntelliJ IDEA 2020.1.1 (Community Edition)** (https://www.jetbrains.com/help/idea/2020.1/discover-intellij-idea.html): IDE. In my opinion one of the best IDEs out there. It's complex and resource consuming, but it has a lot of useful functionalities and default keyboard shortcuts are comfortable.
@@ -39,13 +39,13 @@ The Spark application will have two jobs:
 2. The ***retrieve*** job, that will take the data stored in the DB as input, and do some more computation, in order to create the top 10 genres. This job will output the top list on screen.
 
 #### Why JDBC
-As you can see, the amount of data to be transfered to/from the DB is very small. For this reason we can stick to a JDBC connection, usually slower than other methods, but it allows us to easily change the DB by changing the application's configuration and the JDBC driver. For higher throughput MariaDB supports a Columnar Storage engine https://mariadb.com/kb/en/mariadb-columnstore/ with dedicated Bulk Data Adapters, but this is a specific implementation for MariaDB, it would be overkilling, and would not allow us to change the DB. The latter could be useful in some situations.
+As you can see, the amount of data to be transfered to/from the DB is very small. For this reason we can stick to a JDBC connection, usually slower than other methods, but it allows us to easily change the DB by changing the application's configuration and the JDBC driver. For higher throughput MariaDB supports a Columnar Storage engine https://mariadb.com/kb/en/mariadb-columnstore/ with dedicated Bulk Data Adapters, but this is a specific implementation for MariaDB, it would be overkilling, and would not allow us to change the DB so easily. The latter could be useful in some situations.
 
 ### Environment setup
 
-I will assume you will work on Debian based Linux distribution (I use Lubuntu). For this reason, some commands (e.g. install new packages) may differ from your O/S version. I will also assume you have already Java Runtime and SDK installed (IntelliJ IDEA already provides a Java Runtime). Otherwise you can install it following online tutorials, like this https://linuxize.com/post/install-java-on-ubuntu-18-04/.
+I will assume you will work on Debian based Linux distribution (I use Lubuntu). For this reason, some commands (e.g. install new packages) may differ from your O/S version. I will also assume you have already Java Runtime and SDK installed (IntelliJ IDEA already provides a Java JDK). Otherwise you can install it following online tutorials, like this https://linuxize.com/post/install-java-on-ubuntu-18-04/.
 
-NOTE: I will not focus on the installation of IDE and Text Editor. You can find useful documentation/instructions on the links above.
+NOTE: I will not focus on the installation of IDE and Text Editor. You can find useful documentation/instructions on the links mentioned above.
 
 1. **Data source**. Download the file "book_data.csv.zip" at https://www.kaggle.com/meetnaren/goodreads-best-books?select=book_data.csv. Note: Kaggle account needed. Put the downloaded file in the desired directory and unzip it
 ```bash
@@ -65,7 +65,7 @@ This file contains book data organized in the following columns:
  - **genres**: Genres that the book belongs to; This is user-provided information. The field, as the "book_authors" is a list separated by '|'
  - **image_url**: URL of the book cover image
 
-  The input field that will be loaded in the output DB are highlighted in **bald**.
+  The input fields that will be loaded in the output DB are highlighted in **bald**.
 
 2. **JDBC Driver**. This implementation leverages JDBC connection for the reason explained in the *Architecture* paragraph. Download the JDBC Driver here https://mariadb.com/downloads/#connectors and keep it in a location of your preference. We will use it later.
 
@@ -73,7 +73,7 @@ This file contains book data organized in the following columns:
 ```bash
 ./bin/spark-shell --driver-class-path jars/mariadb-java-client-2.7.2.jar --jars jars/mariadb-java-client-2.7.2.jar
 ```
-Otherwise you can just run the *spark-shell* by issuing the simpler command:
+Otherwise you can just run the *spark-shell* by issuing the simple command:
 ```bash
 ./bin/spark-shell
 ```
@@ -89,9 +89,9 @@ Otherwise you can just run the *spark-shell* by issuing the simpler command:
  ```bash
  #Install
  ./scripts/mysql_install_db --user=mysql
- #Start (Set SQL mode to allow writes from JDBC with Spark)
+ #Start (Set SQL mode to allow I/O from Spark via JDBC)
  ./bin/mysqld_safe --sql-mode='ANSI_QUOTES' --datadir='./data'
- #Test installation
+ #Test setup
  cd './mysql-test' ; perl mysql-test-run.pl
  ```
  - Connect to mysql to the test DB
@@ -101,12 +101,12 @@ Otherwise you can just run the *spark-shell* by issuing the simpler command:
  sudo apt-get update
  sudo apt-get install libncurses5
  #Then try to get to MariaDB's console again
- #After connection to MariaDB'0's console, check if you can see databases
+ #After connection to MariaDB's console, check if you can see databases
  show databases;
  #Then quit MariaDB console
  exit;
  ```
- - Shutdown MariaDB. At the end of your day you might want to shutdown the MariaDB server. Use the command *SHUTDOWN* to stop MariaDB server (from MariaDB console).
+ - Shutdown MariaDB. At the end of your day (not now :) ) you might want to shutdown the MariaDB server. Use the command *SHUTDOWN* to stop MariaDB server (from MariaDB console).
 
 5. **MariaDB: database**. We are now ready to setup MariaDB database and table to store the output data
  ```bash
@@ -150,7 +150,7 @@ sudo apt install maven
 git clone https://github.com/Kir89/spark-books-analysis.git
 ```
 
-9. **Config file**. The config file contains the details of the Spark Application and the details of DB connection. You can find a template of the configuration, in the resources path. It's called it *application-confexample.conf* and you can start from that to make your own configuration, for example if you want to change your DB. In any case You will need to change *username* and *password*. Here is how it's organized:
+9. **Config file**. The config file contains the details of the Spark Application and the details of DB connection. You can find a template of the configuration, in the resources path. It's called *application-confexample.conf* and you can start from that to make your own configuration (e.g. changing the DB). In any case you will need to change *username* and *password*. Here is how it's organized:
 ```json
 it.kirsoft.examples.booksanalysisspark {
   spark {
@@ -185,7 +185,7 @@ java -cp "booksanalysisspark-1.0-jar-with-dependencies.jar:${LOCATION_FOR_mariad
 
 12. **What now?**. At the end of the executions you'll still find the data stored on the DB, so you could:
  - Query the data from MariaDB console
- - Use spark-shell to analyze source data file or data store in MariaDB
+ - Use spark-shell to analyze source data file or data stored in MariaDB
  - Change the code and experiment something new
  - Go on reading to know more about the project
 
@@ -193,7 +193,7 @@ java -cp "booksanalysisspark-1.0-jar-with-dependencies.jar:${LOCATION_FOR_mariad
 
 One of the first things to do when dealing with data is to know the data. Here are some insights I found while working on the input dataset that were useful to define the implemented computational steps.
 
-1. **Reading input data**: double quotes "" create problems when parsing the csv. As a consequence I had some *null* values on casted book ratings and book rating's count. This is partially solved using *.option("escape", """"""")* while reading the csv with Spark. Even with this, there are still some rows that are unusable and must be filtered because of null values on casted values.
+1. **Reading input data**: double quotes "" create problems when parsing the csv. As a consequence I had some *null* values on casted book ratings and book rating's count. *null* values were partially solved using *.option("escape", """"""")* while reading the csv with Spark. Even with this, there are still some rows that are unusable and must be filtered because of null values on casted values. There are probably other problems in the data that need to be discovered.
 
 2. **Ratings outliers**: there are outliers in the dataset. From the following analysis the rating between 0 and 5 have been kept in
 
@@ -360,7 +360,7 @@ Because of the data consideration (nr. 4) on book titles, the used formula will 
 For this field I used the ***row_number*** function of Spark, on a window based on the descending order over the weight rating. No partitioning has been used.
 
 #### Write first 1000 books on DB
-The DataFrame *limit* function has been used on top of the result dataframe of the previous point.
+The DataFrame *limit* function has been used on top of the resulting dataframe from the previous point.
 
 ### Retrieve job
 
@@ -372,7 +372,11 @@ I assumed to compute the top 10 list based on the 1000 records that were written
 
 ## Testing
 
-N.B. Istruzioni su come testare il programma
+Scala Test library has been used to test the majority of the logics included. The build as described above automatically runs these tests. However if you want to run them explicitly you can run the following Maven command
+```bash
+mvn clean test
+```
+In order to test the jobs' logic, the code of each job has been splitted in the *run* method and a *computeLogic* method. The latter is calle from the *run* method and contains the job's logic.
 
 ## Deployment
 
@@ -386,11 +390,11 @@ In order to make the process easily reproducible and automated, the following ch
 - Use exit statuses to signal the "caller" about the motivation of errors:
   1. in case of wrong number of parameters in input
   2. in case of errors while reading job configuration
-  3. in case job errors
+  3. in case of job errors
 - Make it easy to change DB: with JDBC interface you can switch DB in two steps.
   1. Add a new configuration
   2. Change the driver in the run commands
-- Make a "Fat Jar": the *pom.xml* makes a jar with all the dependencies required to run the application. You can distribute it and as far as you also have Java, the source data file, a DB to use and its JDBC Driver, it should be easy to run.
+- Make a "Fat Jar": the *pom.xml* makes a jar with all the dependencies required to run the application. You can distribute it and it should be easy to run, as far as you also have Java, the source data file, a DB to use and its JDBC Driver.
 
 ### What about the cloud
 
@@ -400,7 +404,7 @@ Considering the DB, MariaDB is "cloud ready" (https://mariadb.com/kb/en/mariadb-
 
 You may also want to change the *master* property of Spark in order to run the job, for example, on top of a YARN cluster or other Resource Schedulers.
 
-Since the manipulated data is already public we could choose to deploy it in a public cloud, valuing more the deployment and management simplicity, rather than privacy concerns.
+Since the manipulated data is already public we could choose to deploy the application in a public cloud, valuing more the deployment and management simplicity, rather than privacy concerns.
 
 As deploy tool, there are a lot of tools available, e.g. AWS CodeDeploy, or Jenkins.
 
@@ -414,9 +418,9 @@ For the purpose of this example, no security has been configured on the DB side 
 ## What to do next
 
 There are always things to do and to improve. Here is a list of some things I could do, but I didn't:
-1. Proper logging management: in the code I always used to write messages on stdout. You should avoid this and use a logging library.
-2. Parsing arguments: there are a lot of libraries that allow elegant parsing of input arguments and prompting. However I did not have time to use it.
+1. Proper logging management: in the code I always write messages to stdout. You should avoid this and use a logging library.
+2. Parsing arguments: there are a lot of libraries that allow elegant parsing of input arguments and prompting. However I did not have time to use any of it.
 3. Improve parsing data. As mentioned in the "Data considerations", there are still some rows that are unusable and must be filtered because of null values on casted values. This could be improved.
 4. More granularity for exit codes, to detect failures in DB connections, for example.
 
-If you were surfing the web and you stumbled on this repo, or if you were searching the Internet to find an example about Spark, I hope this could give you at least some food for thought
+If you were surfing the web and you stumbled upon this repo, or if you were searching the Internet to find an example about Spark, I hope you enjoyed the read, or that, at least, you found in this repo some food for thought. :)
