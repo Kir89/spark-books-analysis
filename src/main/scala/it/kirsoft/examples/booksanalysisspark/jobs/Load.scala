@@ -16,14 +16,15 @@ import scala.util.Try
  */
 class Load(val jobConfig: ApplicationConfig, val spark: SparkSession) extends GenericJob {
 
+  val MAX_RATINGS_COUNT = 500000000
+
+  val inputPath = jobConfig.inputFile
+
   /**
    * Runs the job logic
    * @return a Try instance with the result of the computation
    */
   def run(): Try[Unit] = Try{
-
-    val MAX_RATINGS_COUNT = 500000000
-    val inputPath = jobConfig.inputFile
 
     System.out.println(jobConfig.sparkConfig.appName + " started...")
 
@@ -36,6 +37,24 @@ class Load(val jobConfig: ApplicationConfig, val spark: SparkSession) extends Ge
       .option("header", "true")
       .load(inputPath)
 
+    val outputToDB: Dataset[Row] = computeLogic(booksInputDataDF)
+
+    //Write
+    outputToDB
+      .write
+      .mode(SaveMode.Overwrite)
+      .format("jdbc")
+      .option("url", "jdbc:mariadb://localhost:3306/books_example")
+      .option("dbtable", "ranking")
+      .option("user", "ricky")
+      .option("password", "BooksTest!!")
+      .save()
+
+    System.out.println(jobConfig.sparkConfig.appName + " finished.")
+
+  }
+
+  private def computeLogic(booksInputDataDF: DataFrame): Dataset[Row] = {
     //Casting rating and rating count to make computations on them
     val castedDF: DataFrame = booksInputDataDF
       .withColumn("book_rating_casted", col("book_rating").cast(FloatType))
@@ -78,19 +97,6 @@ class Load(val jobConfig: ApplicationConfig, val spark: SparkSession) extends Ge
       select("book_title", "book_weight_rating", "book_desc", "book_authors", "genres", "image_url",
         "book_rating", "book_rating_count").limit(1000)
 
-    //Write
     outputToDB
-      .write
-      .mode(SaveMode.Overwrite)
-      .format("jdbc")
-      .option("url", "jdbc:mariadb://localhost:3306/books_example")
-      .option("dbtable", "ranking")
-      .option("user", "ricky")
-      .option("password", "BooksTest!!")
-      .save()
-
-    System.out.println(jobConfig.sparkConfig.appName + " finished.")
-
   }
-
 }
