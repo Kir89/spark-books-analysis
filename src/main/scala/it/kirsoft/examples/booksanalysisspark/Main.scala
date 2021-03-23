@@ -44,6 +44,7 @@ object Main {
         System.out.println("Error during job execution")
         System.out.println(exception.getMessage)
         exception.printStackTrace()
+        System.exit(3)
       }
     }
   }
