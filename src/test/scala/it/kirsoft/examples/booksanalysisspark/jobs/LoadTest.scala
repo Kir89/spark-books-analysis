@@ -22,6 +22,7 @@ class LoadTest extends AnyFunSuite with PrivateMethodTester {
 
   test("Load.computeLogic") {
 
+    //schema of input data
     //root
     // |-- book_authors: string (nullable = true)
     // |-- book_desc: string (nullable = true)

@@ -31,6 +31,18 @@ class Retrieve(val jobConfig: ApplicationConfig, val spark: SparkSession) extend
       .option("password", jobConfig.dbConfig.password)
       .load()
 
+    computeLogic(jdbcDF).show
+
+    System.out.println(jobConfig.sparkConfig.appName + " finished.")
+
+  }
+
+  /**
+   * Contains compute logic of the job
+   * @param jdbcDF input data read from DB (using JDBC)
+   * @return the result dataset to be printed
+   */
+  private def computeLogic(jdbcDF: DataFrame): Dataset[Row] = {
     //Create table with genres and book_weight_rating. Start to split genres in single elements
     val genresDF: DataFrame = jdbcDF
       .select("genres", "book_weight_rating")
@@ -51,9 +63,8 @@ class Retrieve(val jobConfig: ApplicationConfig, val spark: SparkSession) extend
       .orderBy(col("genre_weight_rating").desc)
       .limit(10)
 
-    genreRanking.show
-
-    System.out.println(jobConfig.sparkConfig.appName + " finished.")
-
+    genreRanking
   }
+
+
 }

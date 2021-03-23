@@ -54,6 +54,11 @@ class Load(val jobConfig: ApplicationConfig, val spark: SparkSession) extends Ge
 
   }
 
+  /**
+   * Contains compute logic of the job
+   * @param booksInputDataDF input data read from file
+   * @return result dataset, ready to be written to DB
+   */
   private def computeLogic(booksInputDataDF: DataFrame): Dataset[Row] = {
     //Casting rating and rating count to make computations on them
     val castedDF: DataFrame = booksInputDataDF
