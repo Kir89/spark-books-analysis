@@ -3,7 +3,7 @@ package it.kirsoft.examples.booksanalysisspark
 import java.text.SimpleDateFormat
 import java.util.{Calendar, Date}
 
-import it.kirsoft.examples.booksanalysisspark.config.ApplicationConfig
+import it.kirsoft.examples.booksanalysisspark.config.{ApplicationConfig, ConfigCreationException}
 import it.kirsoft.examples.booksanalysisspark.jobs._
 import org.apache.spark.sql.SparkSession
 
@@ -13,7 +13,18 @@ object Main {
 
   def main(args: Array[String]) {
 
-    val appConfig: ApplicationConfig = createConfig(args)
+    val triedAppConfig: Try[ApplicationConfig] = Try(createConfig(args))
+    val appConfig: ApplicationConfig = triedAppConfig match {
+      case Success(value) => value
+      case Failure(exception) => {
+        System.out.print(exception.getMessage)
+        exception.printStackTrace()
+        exception match {
+          case InputParamsException(_) => System.exit(1); null
+          case ConfigCreationException(_, _) => System.exit(2); null //null avoids the compiler to complain :)
+        }
+      }
+    }
 
     val spark = SparkSession
       .builder
@@ -72,23 +83,16 @@ object Main {
   def createConfig(args: Array[String]): ApplicationConfig = {
     if(args.length < 2 //Not enough params
       || (args.length == 2 && args(1) == "load") //load needs the third param, to reach the input dataset
-      || (args.length > 2 && (args(1) != "load" && args(1) != "retrieve")) //matching only the correct job names
+      || (args.length >= 2 && (args(1) != "load" && args(1) != "retrieve")) //matching only the correct job names
       || (args.length > 3)) //Avoid more than necessary params
     {
-      System.out.print("Usage:\n1st param: name of config file to use\n2nd param: job to run. load|retrieve\n3rd param:" +
+      throw InputParamsException("Usage:\n1st param: name of config file to use\n2nd param: job to run. load|retrieve\n3rd param:" +
         " input file path (only needed and used if \"load\" job executed)")
-      System.exit(1)
-    }
-
-    val config = Try(new ApplicationConfig(args(0), args(1), Try(args(2)).getOrElse("")))
-    config match {
-      case Success(value) => value
-      case Failure(exception) => {
-        System.out.println(exception.getMessage)
-        exception.printStackTrace()
-        System.out.println("Error while creating job configuration. Exiting...")
-        System.exit(2)
-        null //Avoiding compiler to complain :)
+    } else {
+      val config = Try(new ApplicationConfig(args(0), args(1), Try(args(2)).getOrElse("")))
+      config match {
+        case Success(value) => value
+        case Failure(exception) => throw ConfigCreationException("Error while creating job configuration\n" + exception.getMessage, exception)
       }
     }
   }
