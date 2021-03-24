@@ -60,18 +60,6 @@ object Main {
     }
   }
 
-  /** TODO use this function for defining the log file name!
-   * Defines the name of the log file based on current date and time
-   * @return the name of the log file for the current run
-   */
-  def logFile(): String = {
-    val currentDate: Date = Calendar.getInstance.getTime
-    val dateFormat: SimpleDateFormat = new SimpleDateFormat("yyyy-mm-dd_hh:mm:ss")
-    val currentDatePrintable: String = dateFormat.format(currentDate)
-
-    "./booksanalysis_" + currentDatePrintable +".log"
-  }
-
   /**
    * This function checks the arguments of the application and if ok, returns the application configuration
    * 1st param: name of config file to use
